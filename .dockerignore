@@ -1,0 +1,44 @@
+# Ignore files not needed in Docker image
+
+# Environment files (contains secrets)
+.env
+.env.*
+env.example
+
+# Documentation
+README.md
+SECURITY.md
+*.md
+
+# Development files
+.git
+.gitignore
+.dockerignore
+
+# Docker files
+docker-compose.yml
+Dockerfile
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.swp
+*.bak
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# Build artifacts
+dist/
+build/
+

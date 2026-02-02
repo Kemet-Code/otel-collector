@@ -15,11 +15,9 @@ The following files contain or should contain sensitive credentials:
 The `otel-collector-config.yaml` uses environment variable substitution:
 
 ```yaml
-extensions:
-  basicauth/grafana_cloud:
-    client_auth:
-      username: ${env:GRAFANA_CLOUD_INSTANCE_ID}
-      password: ${env:GRAFANA_CLOUD_API_TOKEN}
+exporters:
+  clickhouse:
+    endpoint: ${env:CLICKHOUSE_DSN}
 ```
 
 This means credentials come from the `.env` file, not hardcoded in the config.
@@ -38,8 +36,7 @@ volumes/
 #### Development
 Store credentials in `.env` file (not committed):
 ```bash
-GRAFANA_CLOUD_INSTANCE_ID=1433112
-GRAFANA_CLOUD_API_TOKEN=glc_xxxxxxxxxxxxx
+CLICKHOUSE_DSN=http://default:password@localhost:18123/otel
 ```
 
 #### Production
@@ -53,32 +50,30 @@ Use a secrets management system:
 
 Example with Docker secrets:
 ```yaml
-version: '3.8'
 services:
   otel-collector:
     secrets:
-      - grafana_token
+      - clickhouse_password
     environment:
-      - GRAFANA_CLOUD_API_TOKEN_FILE=/run/secrets/grafana_token
+      - CLICKHOUSE_PASSWORD_FILE=/run/secrets/clickhouse_password
 
 secrets:
-  grafana_token:
+  clickhouse_password:
     external: true
 ```
 
-### 5. Token Permissions
+### 5. ClickHouse Permissions
 
-When creating Grafana Cloud tokens, use **minimum required permissions**:
+When creating ClickHouse users, use **minimum required permissions**:
 
 Required:
-- ✅ `metrics:write`
-- ✅ `logs:write`
-- ✅ `traces:write`
+- ✅ `INSERT` on otel database
+- ✅ `CREATE TABLE` (for auto schema)
+- ✅ `CREATE DATABASE` (for auto schema)
 
 Not needed:
 - ❌ `admin` permissions
-- ❌ `user:read` permissions
-- ❌ `dashboards:write` permissions
+- ❌ Access to other databases
 
 ### 6. Network Security
 
@@ -94,55 +89,42 @@ Not needed:
 
 ### 7. Rotating Credentials
 
-Periodically rotate your Grafana Cloud tokens:
+Periodically rotate your ClickHouse credentials:
 
-1. Create new token in Grafana Cloud
-2. Update `.env` file with new token
+1. Create new user/password in ClickHouse
+2. Update `.env` file with new credentials
 3. Restart collector: `docker-compose restart`
-4. Revoke old token in Grafana Cloud
+4. Remove old user in ClickHouse
 
 ### 8. Monitoring Access
 
 Monitor who accesses the collector:
 - Check collector logs for unauthorized access attempts
-- Monitor Grafana Cloud for unexpected data sources
+- Monitor ClickHouse for unexpected queries
 - Review access policies regularly
 
 ### 9. Incident Response
 
 If credentials are compromised:
 
-1. **Immediately revoke** the token in Grafana Cloud
-2. **Generate new token** with fresh credentials
-3. **Update** all services using the collector
-4. **Review logs** for suspicious activity
-5. **Audit** who had access to the credentials
+1. **Immediately change** the ClickHouse password
+2. **Update** all services using the collector
+3. **Review logs** for suspicious activity
+4. **Audit** who had access to the credentials
 
 ### 10. Checklist Before Deployment
 
 - [ ] `.env` file is in `.gitignore`
 - [ ] No credentials in version control
-- [ ] Token has minimal required permissions
+- [ ] ClickHouse user has minimal required permissions
 - [ ] Firewall rules restrict access
 - [ ] TLS enabled for production
 - [ ] Credentials stored in secrets manager (production)
 - [ ] Monitoring/alerting configured
 - [ ] Incident response plan documented
 
-## Audit Log
-
-Keep a log of credential changes:
-
-```markdown
-| Date       | Action           | User  | Token ID | Reason          |
-|------------|------------------|-------|----------|-----------------|
-| 2025-11-18 | Token created    | Admin | xxx123   | Initial setup   |
-| 2025-12-18 | Token rotated    | Admin | xxx456   | Monthly rotation|
-```
-
 ## Resources
 
-- [Grafana Cloud Security](https://grafana.com/docs/grafana-cloud/account-management/authentication-and-permissions/)
+- [ClickHouse Security](https://clickhouse.com/docs/en/guides/sre/user-management/configuring-security)
 - [OTEL Security Best Practices](https://opentelemetry.io/docs/specs/otel/configuration/security/)
 - [Docker Secrets](https://docs.docker.com/engine/swarm/secrets/)
-

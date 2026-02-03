@@ -11,3 +11,6 @@ COPY --chmod=644 otel-collector-config.yaml /etc/otel-collector-config.yaml
 
 # OTLP receivers + health check
 EXPOSE 4317 4318 13133
+
+# Use custom config by default
+CMD ["--config=/etc/otel-collector-config.yaml"]

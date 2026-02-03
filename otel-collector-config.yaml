@@ -12,6 +12,8 @@ processors:
     send_batch_size: 100
 
 exporters:
+  debug:
+    verbosity: basic
   clickhouse:
     endpoint: ${env:CLICKHOUSE_DSN}
     ttl: 72h
@@ -36,12 +38,12 @@ service:
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [clickhouse]
+      exporters: [debug, clickhouse]
     metrics:
       receivers: [otlp]
       processors: [batch]
-      exporters: [clickhouse]
+      exporters: [debug, clickhouse]
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [clickhouse]
+      exporters: [debug, clickhouse]
